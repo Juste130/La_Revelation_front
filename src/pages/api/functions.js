@@ -2,6 +2,7 @@ import axios from "axios";
 
 export const apiBaseUrl = "http://127.0.0.1:8000/api/";
 
+
 // Crée une instance Axios configurée
 const api = axios.create({
   baseURL: apiBaseUrl,
@@ -65,7 +66,30 @@ api.interceptors.response.use(
 export const isLoggedIn = () => !!localStorage.getItem("accessToken");
 
 // Déconnecter un utilisateur
-export const logOut = () => {
+export const logOut = async () => {
+  const refreshToken = localStorage.getItem("refreshToken");
+
+  if (refreshToken) {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/logout/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (response.ok) {
+        console.log("Déconnexion réussie côté serveur.");
+      } else {
+        console.warn("Échec de la déconnexion côté serveur.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion :", error.message);
+    }
+  }
+
+  // Nettoyer les données locales
   localStorage.clear();
 };
 
@@ -129,6 +153,24 @@ export const reserverEvenement = async (reservation) => {
     throw error;
   }
 };
+// Récupérer toutes les réservations de l'utilisateur connecté
+export const mesReservations = async () => {
+  try {
+    // Effectuer la requête GET pour récupérer les réservations
+    const response = await api.get("reservations/", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`, // Utilisation du token pour authentifier la requête
+      },
+    });
+
+    // Retourner les données de la réponse (les réservations)
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des réservations :", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 
 // Gestion des chambres
 export const fetchChambres = async () => {

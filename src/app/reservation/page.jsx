@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Header from "@/components/header";
+import axios from "axios";
+
+import ReservationCard from "@/components/reservationCard";
 import Footer from "@/components/footer";
-import { reserverChambre, reserverEvenement } from "@/lib/api/functions";
+import Header from "@/components/header";
+
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Reservation() {
   const [typeReservation, setTypeReservation] = useState(null);
@@ -13,6 +17,9 @@ export default function Reservation() {
   const handleClick = (value) => {
     setTypeReservation((prev) => (prev !== value ? value : null));
   };
+
+  const { isAuthenticated, Data } = useAuth();
+// 
 
   const typeRef = useRef(null);
   const dateHeureDebutRef = useRef(null);
@@ -25,12 +32,12 @@ export default function Reservation() {
   const dureeRef = useRef(null);
 
   const [reservation, setReservation] = useState({
-    place_designation: '',
-    date: '',
-    heure_debut: '',
-    duree: '',
-    nombre_invites: '',
-    plus_details: '',
+    place_designation: "",
+    date: "",
+    heure_debut: "",
+    duree: "",
+    nombre_invites: "",
+    plus_details: "",
   });
 
   const handleChange = (e) => {
@@ -49,10 +56,14 @@ export default function Reservation() {
       plus_details: plusDetailsRef.current.value,
     };
     try {
-      const data = await reserverEvenement(barReservation);
-      alert('Réservation Bar réussie!');
+      const response = await axios.post("/api/reserverEvent", barReservation, {
+        "headers": {"Content-Type": "application/json"},
+      });
+      alert("La soumission de votre nouvelle réservation a été un succès");
+      setTypeReservation(null);
     } catch (error) {
-      console.error('Erreur de réservation:', error);
+      console.error("Erreur de réservation:", error);
+      alert("Un problème est survenu lors de la reservation");
     } finally {
       setLoading(false);
     }
@@ -61,7 +72,7 @@ export default function Reservation() {
     e.preventDefault();
     setLoading(true);
     const vipReservation = {
-      place_designation: 'vip',
+      place_designation: "vip",
       date: dateRef.current.value,
       heure_debut: heureDebutRef.current.value,
       duree: dureeRef.current.value,
@@ -69,10 +80,14 @@ export default function Reservation() {
       plus_details: plusDetailsRef.current.value,
     };
     try {
-      const data = await reserverEvenement(vipReservation);
-      alert('Réservation VIP réussie!');
+      const response = await axios.post("/api/reserverEvent", vipReservation, {
+        "headers": {"Content-Type": "application/json"},
+      });
+      alert("La soumission de votre nouvelle réservation a été un succès");
+      setTypeReservation(null);
     } catch (error) {
-      console.error('Erreur de réservation:', error);
+      console.error("Erreur de réservation:", error);
+      alert("Un problème est survenu lors de la reservation du night-club");
     } finally {
       setLoading(false);
     }
@@ -87,8 +102,11 @@ export default function Reservation() {
       plus_details: plusDetailsRef.current.value,
     };
     try {
-      const data = await reserverChambre(roomReservation);
+      const response = await axios.post("/api/reserverChambre", roomReservation, {
+        "headers": {"Content-Type": "application/json"},
+      });
       alert("La soumission de votre nouvelle réservation a été un succès");
+      setTypeReservation(null);
     } catch (error) {
       console.error("Erreur de soumission:", error);
       alert("Erreur lors de la création de la réservation");
@@ -102,6 +120,17 @@ export default function Reservation() {
       }
     }
   }, [router.query]);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/connexion"); // Redirige vers la page de connexion si non authentifié
+    }
+  }, [isAuthenticated, router]);
+  //
+  if (!isAuthenticated) {
+    return <p>Redirection en cours...</p>;
+  }
+
   return (
     <main className="">
       <Header />
@@ -139,10 +168,17 @@ export default function Reservation() {
         <div>
           {/* Section Réservation pour null */}
           {typeReservation === null && (
-            <div className="flex text-center justify-center text-xl  w-full h-[500px]">
+            <div className="flex flex-col text-center justify-center text-xl  w-full h-[500px]">
               <span className="m-auto">
                 Cliquez sur l'une des sections ci-dessus pour faire votre
                 réservation.
+              </span>
+              <span className="flex mx-auto w-[95%]">
+                <ReservationCard
+                  date={"2 Janvier"}
+                  type={"bar"}
+                  status={"accepté"}
+                />
               </span>
             </div>
           )}
@@ -289,7 +325,7 @@ export default function Reservation() {
                       className="w-full px-4 py-2 border rounded-lg"
                     >
                       <option value="ventile">Chambre ventilée</option>
-                      <option value="climatisee">Chambre climatisée</option>
+                      <option value="climatise">Chambre climatisée</option>
                       <option value="suite">Suite</option>
                     </select>
                   </div>
@@ -387,7 +423,9 @@ export default function Reservation() {
                       >
                         <option value="hall0">Hall à l'entré</option>
                         <option value="hall1">Hall au premier étage</option>
-                        <option value="salle_conference">Espace de conférence</option>
+                        <option value="salle_conference">
+                          Espace de conférence
+                        </option>
                         <option value="calme">Espace calme</option>
                       </select>
                     </div>
@@ -434,7 +472,6 @@ export default function Reservation() {
                       id="duree"
                       name="duree"
                       min={1}
-                      
                       onChange={handleChange}
                       ref={dureeRef}
                       className="w-full px-4 py-2 border rounded-lg"

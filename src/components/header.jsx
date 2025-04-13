@@ -1,16 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useNavigationLink } from "@/lib/context";
-import { Bell } from "lucide";
-
-
+import { Bell } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
-  
+  const [hasAccessToken, setHasAccessToken] = useState(false);
+
+  const { isAuthenticated, user, logout } = useAuth();
+
   const router = useRouter();
   const {
     selectLink,
@@ -25,19 +26,36 @@ export default function Header() {
   } = useNavigationLink();
 
   // Fonction pour gérer la déconnexion
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshToken = localStorage.getItem("refreshToken");
+    setHasAccessToken(!!accessToken || !!refreshToken);
+  }, []);
+
   const handleLogout = () => {
-    setIsAuthenticated(false); // Simule la déconnexion
     setShowLogoutPopup(false); // Ferme le pop-up
+    logout();
+    router.push("/");
   };
 
 
   return (
-    <nav className="bg-white w-screen h-[56px] flex px-4">
-      <img src="logohouezesperance.png" alt="" className="w-10 h-9 ml-3 my-auto"/>
-      <strong className=" ml-3 my-auto text-3xl mr-14">La Révélation</strong>
+    <nav className="bg-white w-screen h-[56px] flex px-4 z-50">
+      <img
+        src="logohouezesperance.png"
+        alt=""
+        className="w-10 h-9 ml-3 my-auto"
+      />
+      <strong className=" flex ml-3 my-auto text-3xl mr-10">
+        La Révélation
+      </strong>
       <ul className="hidden xl:flex space-x-6 items-center ml-14 text-[#565e6c] ">
         <li
-          className={`${isHomeSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} cursor-pointer px-1`}
+          className={`${
+            isHomeSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } cursor-pointer px-1`}
           onClick={() => {
             selectLink("home");
             router.push("/");
@@ -46,7 +64,10 @@ export default function Header() {
           Accueil
         </li>
         <li
-          className={`${isMotelSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} cursor-pointer px-1`}
+          className={`${
+            isMotelSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } cursor-pointer px-1`}
           onClick={() => {
             selectLink("motel");
             router.push("/motel");
@@ -54,8 +75,12 @@ export default function Header() {
         >
           Motel
         </li>
+
         <li
-          className={`${isBarSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} cursor-pointer px-1`}
+          className={`${
+            isBarSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } cursor-pointer px-1`}
           onClick={() => {
             selectLink("bar");
             router.push("/bar");
@@ -64,7 +89,10 @@ export default function Header() {
           Bar
         </li>
         <li
-          className={`${isNightClubSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} cursor-pointer px-1`}
+          className={`${
+            isNightClubSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } cursor-pointer px-1`}
           onClick={() => {
             selectLink("nightclub");
             router.push("/nightclub");
@@ -72,9 +100,11 @@ export default function Header() {
         >
           Night-club
         </li>
-        {isAuthenticated ? (
-          <li
-          className={`${isReservationSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} cursor-pointer px-1`}
+        <li
+          className={`${
+            isReservationSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } cursor-pointer px-1`}
           onClick={() => {
             selectLink("reservation");
             router.push("/reservation");
@@ -82,21 +112,12 @@ export default function Header() {
         >
           Réservation
         </li>
-        ) : (
-          <li
-          className={`${isReservationSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} cursor-pointer px-1`}
-          onClick={() => {
-            selectLink("connexion");
-            router.push("/connexion");
-          }}
-        >
-          Réservation
-        </li>
-        )
 
-        }
         <li
-          className={`${isContactSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} cursor-pointer px-1`}
+          className={`${
+            isContactSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } cursor-pointer px-1`}
           onClick={() => {
             selectLink("contact");
             router.push("/contact");
@@ -108,40 +129,44 @@ export default function Header() {
       <div className="xl:block flex items-center space-x-4 my-auto ml-[30%]">
         {isAuthenticated ? (
           <div className="flex justify-between items-center space-x-3 ml-3">
-            <span>HOUEZO Juste</span>
-            <Bell size={24} color="#A5B4CB" strokeWidth={1}/>
+            <span>{user ? `${user.nom} ${user.prenom}` : ""}</span>
+            <Bell size={54} color="#A5B4CB" strokeWidth={2} />
             <button
-            className="bg-red-500 text-white px-4 py-2 rounded"
-            onClick={() => {
-              setShowLogoutPopup(true);
-            }}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+              onClick={() => {
+                setShowLogoutPopup(true);
+              }}
             >
               Déconnexion
             </button>
-
           </div>
-        ) :
-        (
-          <div className="flex justify-between items-center space-x-3 ml-3">
+        ) : (
+          <div className="hidden xl:flex justify-between items-center space-x-3 ml-3">
             <button
-            className="bg-[#636AE8] text-white px-4 py-2 rounded"
-            
+              className="bg-[#636AE8] text-white px-4 py-2 rounded"
+              onClick={() => {
+                selectLink("connexion");
+                router.push("/connexion");
+              }}
             >
               Se connecter
             </button>
             <button
-            className="bg-[#636AE8] text-white px-4 py-2 rounded"
+              className="bg-[#636AE8] text-white px-4 py-2 rounded"
+              onClick={() => {
+                selectLink("inscription");
+                router.push("/inscription");
+              }}
             >
               S'inscrire
             </button>
           </div>
-        )
-        }
+        )}
       </div>
 
       {/* Bouton hamburger pour les petits écrans */}
       <button
-        className="xl:hidden p-2 focus:outline-none z-10"
+        className="xl:hidden p-2 focus:outline-none z-50"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
       >
         <svg
@@ -162,10 +187,15 @@ export default function Header() {
 
       {/* Menu pour les petits écrans */}
       <ul
-        className={`${isMenuOpen ? "flex" : "hidden"} flex-col xl:hidden h-screen mb-0 w-[60%] rounded-md absolute top-0 left-0 bg-white bg-opacity-65 z-10 p-4 space-y-4`}
+        className={`${
+          isMenuOpen ? "flex" : "hidden"
+        } flex-col xl:hidden h-screen mb-0 w-[60%] rounded-md absolute top-0 left-0 bg-white bg-opacity-65 z-10 p-4 space-y-4`}
       >
         <li
-          className={`${isHomeSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} cursor-pointer pt-11 px-1`}
+          className={`${
+            isHomeSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } cursor-pointer pt-11 px-1`}
           onClick={() => {
             selectLink("home");
             router.push("/");
@@ -175,7 +205,10 @@ export default function Header() {
           Accueil
         </li>
         <li
-          className={`cursor-pointer ${isMotelSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} px-1`}
+          className={`cursor-pointer ${
+            isMotelSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } px-1`}
           onClick={() => {
             selectLink("motel");
             router.push("/motel");
@@ -185,7 +218,10 @@ export default function Header() {
           Motel
         </li>
         <li
-          className={`cursor-pointer ${isBarSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} px-1`}
+          className={`cursor-pointer ${
+            isBarSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } px-1`}
           onClick={() => {
             selectLink("bar");
             router.push("/bar");
@@ -195,7 +231,10 @@ export default function Header() {
           Bar
         </li>
         <li
-          className={`cursor-pointer ${isNightClubSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} px-1`}
+          className={`cursor-pointer ${
+            isNightClubSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } px-1`}
           onClick={() => {
             selectLink("nightclub");
             router.push("/nightclub");
@@ -205,7 +244,10 @@ export default function Header() {
           Night-club
         </li>
         <li
-          className={`cursor-pointer ${isReservationSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} px-1`}
+          className={`cursor-pointer ${
+            isReservationSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } px-1`}
           onClick={() => {
             selectLink("reservation");
             router.push("/reservation");
@@ -215,7 +257,10 @@ export default function Header() {
           Réservation
         </li>
         <li
-          className={`cursor-pointer ${isContactSelected && "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"} px-1`}
+          className={`cursor-pointer ${
+            isContactSelected &&
+            "text-[#636AE8] font-semibold border-b-[5px] border-[#636AE8]"
+          } px-1`}
           onClick={() => {
             selectLink("contact");
             router.push("/contact");
@@ -224,35 +269,27 @@ export default function Header() {
         >
           Contact
         </li>
-        {isAuthenticated ? (
+        {hasAccessToken ? (
           <li className="mt-4 flex items-center">
             <button
-            className="bg-red-500 text-white px-4 py-2 rounded"
-            onClick={() => {
-              setShowLogoutPopup(true);
-            }}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+              onClick={() => {
+                setShowLogoutPopup(true);
+              }}
             >
               Déconnexion
             </button>
-
           </li>
-        ) :
-        (
-          <li className="mt-4 flex flex-col items-center space-y-4">
-            <button
-            className="bg-[#636AE8] text-white px-4 py-2 rounded"
-            >
+        ) : (
+          <li className="mt-4 flex flex-col items-center space-y-4 z-50">
+            <button className="bg-[#636AE8] text-white px-4 py-2 rounded">
               Se connecter
             </button>
-            <button
-            className="bg-[#636AE8] text-white px-4 py-2 rounded"
-            >
+            <button className="bg-[#636AE8] text-white px-4 py-2 rounded">
               S'inscrire
             </button>
           </li>
-        )
-        }
-      
+        )}
       </ul>
       {/* Pop-up de confirmation de déconnexion */}
       {showLogoutPopup && (
@@ -276,7 +313,6 @@ export default function Header() {
           </div>
         </div>
       )}
-
     </nav>
   );
 }
